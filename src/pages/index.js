@@ -4,13 +4,14 @@ import Image from 'next/image'
 import classes from './styles.module.css'
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-// import VimeoPlayer from 'react-player/vimeo';
+import axios from 'axios';
 
 const VimeoPlayer = dynamic(() => import('react-player/vimeo'), { ssr: false });
+const ReactPlayer = dynamic(() => import('react-player/lazy'), { ssr: false });
 
-export default function Home() {
+export default function Home({ videos }) {
   const [isAllowed, setIsAllowed] = useState(false)
-
+  console.log(videos)
   const clickHandler = (e) => {
     console.log('click modal')
   }
@@ -29,17 +30,34 @@ export default function Home() {
 
         </div>
         <div style={{ margin: '200px' }}>
-          {/* <VimeoPlayer
-            className={classes['react-player']}
-            url='https://vimeo.com/851312045'
-            width='800px'
-            height='500px'
-            controls={isAllowed}
-            fallback={true}
-            onClick={!isAllowed && clickHandler}
-          /> */}
+          {
+            videos.length > 0 &&
+            videos.map(item => {
+              return (
+                <div>
+                  <h1>{item.name}</h1>
+                  <p>{item.description}</p>
+                  <ReactPlayer
+                    className={classes['react-player']}
+                    url={`https://vimeo.com/${item._id}`}
+                    width='800px'
+                    height='500px'
+                    controls
+                  />
+                </div>
+              )
+
+            })
+          }
         </div>
       </main>
     </>
   )
+}
+
+
+export async function getServerSideProps() {
+  const { data } = await axios.get('http://localhost:3000/api/videos');
+
+  return { props: { videos: data.videos } }
 }

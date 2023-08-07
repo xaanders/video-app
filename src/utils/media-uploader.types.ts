@@ -6,7 +6,6 @@ enum MediaProvider {
 type MediaVimeoItem = {
     provider: MediaProvider.VIMEO;
     id: string,
-    link: string
 };
 
 type MediaItem = {
@@ -17,6 +16,7 @@ interface Uploader {
     upload(
         file: File,
         name: string,
+        description: string,
         onProgress?: (bytesUploaded: number, bytesTotal: number) => void
     ): Promise<MediaItem>;
 }

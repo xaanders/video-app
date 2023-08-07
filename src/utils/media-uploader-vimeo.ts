@@ -12,21 +12,22 @@ type VimeoPresignUploadingResponse = {
         upload_link: string;
     };
     name: string,
+    description: string,
     uri: string;
 };
 
 export default class MediaUploaderVimeo implements Uploader {
-    async upload(file: File, name: string, onProgress?: (bytesUploaded: number, bytesTotal: number) => void): Promise<MediaVimeoItem> {
+    async upload(file: File, name: string, description: string, onProgress?: (bytesUploaded: number, bytesTotal: number) => void): Promise<MediaVimeoItem> {
         const presignedLinkResponse =
             await axios.post<VimeoPresignUploadingResponse>('/api/vimeo', {
                 size: file.size,
-                name: name
+                name: name,
+                description: description
             });
-
+        console.log(presignedLinkResponse)
         const uploadURI = presignedLinkResponse.data.upload.upload_link;
         const vimeoVideoLink = presignedLinkResponse.data.uri;
         const vimeoId = vimeoVideoLink.split('/').slice(-1)[0];
-
 
         return new Promise<MediaVimeoItem>((resolve, reject) => {
             const uploader = new tus.Upload(file, {
@@ -42,8 +43,8 @@ export default class MediaUploaderVimeo implements Uploader {
                     resolve({
                         provider: MediaProvider.VIMEO,
                         id: vimeoId,
-                        link: vimeoVideoLink
                     });
+                    
                 }
             });
             uploader.start()
