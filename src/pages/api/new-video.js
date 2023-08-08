@@ -5,7 +5,7 @@ let Vimeo = require('vimeo').Vimeo;
 
 
 const handler = async (req, res) => {
-    if (req.method === 'POST') {
+    if (req.method === 'PUT') {
 
         const { db, dbClient } = await ConnectToDatabase(process.env.MONGODB_URL);
         const videosCollection = db.collection('videos');
@@ -20,13 +20,14 @@ const handler = async (req, res) => {
         try {
             await videosCollection.insertOne(newVideo);
             await imgsCollection.insertOne({ _id: req.body.id });
+            
             dbClient.close();
 
-            res.status(200).json(newVideo)
+            return res.status(200).json(newVideo)
 
         } catch (error) {
             console.log('error: ' + error);
-            res.status(500).json({message: error})
+            return res.status(500).json({message: error})
 
         }
 
