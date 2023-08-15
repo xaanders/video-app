@@ -4,6 +4,7 @@ const nextConfig = {
   images: {
     domains: ['vimeo.com', 'i.vimeocdn.com'],
   },
+ 
 }
 
 module.exports = nextConfig

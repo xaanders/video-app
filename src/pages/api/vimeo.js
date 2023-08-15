@@ -6,12 +6,15 @@ const handler = async (req, res) => {
     if (req.method === "POST") {
         const size = req.body.size;
         const name = req.body.name;
+        const description = req.body.description;
+
         const body = {
             upload: {
                 approach: "tus",
                 size,
             },
             name,
+            description,
             privacy: {
                 view: "anybody",
                 embed: "public"

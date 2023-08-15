@@ -1,6 +1,4 @@
 import { ConnectToDatabase } from '@/helpers/dbConnection';
-import { ObjectId } from 'mongodb';
-import { resolve } from 'styled-jsx/css';
 
 let Vimeo = require('vimeo').Vimeo;
 
