@@ -11,6 +11,7 @@ export const authOptions = {
         CredentialsProvider({
             name: "credentials",
             authorize: async (credentials) => {
+                console.log(credentials)
                 if (!credentials) return null;
                 const { db, dbClient } = await ConnectToDatabase(process.env.MONGODB_URL);
                 const usersCollection = db.collection('users');

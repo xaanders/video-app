@@ -17,6 +17,7 @@ const handler = async (req, res) => {
     const usersCollection = db.collection('users');
 
     try {
+        console.log(password)
         const hashedPassword = await hash(password, 12);
         await usersCollection.insertOne({
             name,

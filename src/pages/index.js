@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import { signIn, signOut } from "next-auth/react"
 import MediaUploader from '@/components/MediaUploader'
 import Image from 'next/image'
 import classes from './styles.module.css'
@@ -8,6 +9,9 @@ import axios from 'axios';
 import { removingVideo } from '@/helpers/ManagingVideo';
 import ChangeThumbnail from '@/components/ChangeThumbnail';
 import ChangeDescr from '@/components/ChangeDescr';
+import { getServerSession } from 'next-auth'
+import { authOptions } from './api/auth/[...nextauth]'
+import { useRouter } from 'next/router'
 
 const VimeoPlayer = dynamic(() => import('react-player/vimeo'), { ssr: false });
 const ReactPlayer = dynamic(() => import('react-player/lazy'), { ssr: false });
@@ -18,18 +22,20 @@ export default function Home({ videos, error, auth }) {
   const [isEdit, setIsEdit] = useState(false)
   const [isLogin, setIsLogin] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter();
   const [user, setUser] = useState({
-    login: '',
+    email: '',
     password: ''
   })
-  
+
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
     password: '',
     password2: ''
   })
-  
+
   if (error) {
     return <div>{error}</div>
   }
@@ -40,13 +46,36 @@ export default function Home({ videos, error, auth }) {
     setCurrentVideos(prev => prev.filter(item => item._id !== id))
   }
 
-  const loginHandler = (e) => {
+  const loginHandler = async (e) => {
     e.preventDefault();
-    console.log(user)
+    try {
+      setIsLoading(true);
+
+      const res = await signIn('credentials', {
+        redirect: false,
+        email: user.email,
+        password: user.password,
+        callbackUrl: '/'
+      });
+      setIsLoading(false);
+      if(!res.ok) {
+        throw new Error(res.error)
+      }
+      router.push('/')
+    } catch (err) {
+      setIsLoading(false);
+      console.error(err)
+    }
   }
-  const signupHandler = (e) => {
+  const signupHandler = async (e) => {
     e.preventDefault();
-    axios.post('/api/user/signup', {newUser})
+    try {
+      console.log(newUser)
+      const res = await axios.post('/api/auth/signup', newUser)
+      console.log(res)
+    } catch (error) {
+      console.log(error)
+    }
   }
   return (
 
@@ -67,6 +96,8 @@ export default function Home({ videos, error, auth }) {
               <MediaUploader />
 
             </div>
+            <button onClick={() => { signOut() }} style={{margin: "50px"}}>Signout</button>
+
             <div style={{ margin: '200px' }}>
               {
                 currentVideos.length > 0 &&
@@ -108,14 +139,13 @@ export default function Home({ videos, error, auth }) {
 
           </> :
           <>
-
             <button onClick={() => setIsLogin(prev => !prev)}>Try to login</button>
             <button onClick={() => setIsSignUp(prev => !prev)}>SignUp</button>
 
             {isLogin &&
               <form onSubmit={loginHandler}>
-                <label htmlFor='title' style={{ display: 'block' }}>Login</label>
-                <input type="text" id="title" name="login" onChange={(e) => setUser(prev => ({ ...prev, [e.target.name]: e.target.value }))} />
+                <label htmlFor='title' style={{ display: 'block' }}>Email</label>
+                <input type="email" id="title" name="email" onChange={(e) => setUser(prev => ({ ...prev, [e.target.name]: e.target.value }))} />
 
                 <label htmlFor='password' style={{ display: 'block' }}>Password:</label>
                 <input type="password" id="password" name="password" onChange={(e) => setUser(prev => ({ ...prev, [e.target.name]: e.target.value }))} />
@@ -156,11 +186,17 @@ export default function Home({ videos, error, auth }) {
   )
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context) {
   const { data } = await axios.get('http://localhost:3000/api/updating/videos');
-  const { data: picData } = await axios.get('http://localhost:3000/api/updating/pictures');
-  console.log(picData);
-  const user = { isAuthenticated: false }
+  const picData = await axios.get('http://localhost:3000/api/updating/pictures');
+  const session = await getServerSession(context.req, context.res, authOptions)
+  console.log(picData.data)
+  console.log(session)
+  let user = false;
+
+  if (session) {
+    user = { isAuthenticated: true }
+  }
 
   if (data.error) {
     return { props: { videos: [], error: data.error, auth: user } }
